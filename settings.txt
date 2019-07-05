@@ -1,0 +1,5 @@
+Kleinbuchstaben: false
+Grossbuchstaben: false
+Zahlen: false
+Sonderzeichen: false
+Passwortlaenge: 80
