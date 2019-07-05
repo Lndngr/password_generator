@@ -2,11 +2,18 @@ package gui;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.awt.datatransfer.*;
 import java.awt.Toolkit;
 import java.util.Random;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 
 public class Generator {
@@ -16,9 +23,10 @@ public class Generator {
 	private JTextField tf1;
 	private JButton b1, b2, b3, b4;
 	private JMenuBar menuBar;
-	private JMenu menuSettings, menuExit;
-	private JMenuItem menuItemExit;
+	private JMenu menuSettings, menuData, menuExit;
+	private JMenuItem menuItemExit, selectFile, saveSettings;
 	private JCheckBox checkbox_kb, checkbox_gb, checkbox_z, checkbox_s;
+	public String selectedFile;
 	
 	public Generator() {
 
@@ -27,11 +35,16 @@ public class Generator {
 		menuBar = new JMenuBar();
 		menuSettings = new JMenu("Settings");
 		menuExit = new JMenu("Exit");
+		menuData = new JMenu("Datei");
 		
+		// MenuBar definieren
+		menuBar.add(menuData);
 		menuBar.add(menuSettings);
+		menuBar.add(menuExit);
+		
 		
 		checkbox_kb = new JCheckBox("Kleinbuchstaben");
-		checkbox_gb = new JCheckBox("Großbuchstaben");
+		checkbox_gb = new JCheckBox("Grossbuchstaben");
 		checkbox_z = new JCheckBox("Zahlen");
 		checkbox_s = new JCheckBox("Sonderzeichen");
 		
@@ -40,12 +53,113 @@ public class Generator {
 		checkbox_z.setSelected(true);
 		checkbox_s.setSelected(true);
 		
+		
 		menuSettings.add(checkbox_kb);
 		menuSettings.add(checkbox_gb);
 		menuSettings.add(checkbox_z);
 		menuSettings.add(checkbox_s);
 		
-		menuBar.add(menuExit);
+		platzhalter1 = new JLabel("");
+		platzhalter1.setVerticalAlignment(JLabel.CENTER);
+		platzhalter1.setHorizontalAlignment(JLabel.CENTER);
+		platzhalter1.setForeground(Color.red);
+		
+		
+		selectFile = new JMenuItem(new AbstractAction("Import Settings") {
+			public void actionPerformed(ActionEvent f) {
+				JFileChooser chooser = new JFileChooser();
+				FileNameExtensionFilter filter = new FileNameExtensionFilter("Configuration file", "txt");
+				chooser.setFileFilter(filter);
+				int returnVal = chooser.showOpenDialog(null);
+				if(returnVal == JFileChooser.APPROVE_OPTION) {
+					selectedFile = chooser.getSelectedFile().getAbsolutePath();
+					
+					FileReader input;
+					try {
+						input = new FileReader(selectedFile);
+						BufferedReader bufRead = new BufferedReader(input);
+						String myLine = null;
+						
+						platzhalter1.setText("Config loaded!");
+
+						while ( (myLine = bufRead.readLine()) != null)
+						{    
+							String[] array = myLine.split(":");
+						    
+						    array[1] = array[1].replaceAll("\\s","");
+						    
+						    if(array[0].equals(checkbox_kb.getText())) {
+						    	checkbox_kb.setSelected(Boolean.parseBoolean(array[1]));
+						    }
+						    else if(array[0].equals(checkbox_gb.getText())) {
+						    	checkbox_gb.setSelected(Boolean.parseBoolean(array[1]));
+						    }
+						    else if(array[0].equals(checkbox_z.getText())) {
+						    	checkbox_z.setSelected(Boolean.parseBoolean(array[1]));
+						    }
+						    else if(array[0].equals(checkbox_s.getText())) {
+						    	checkbox_s.setSelected(Boolean.parseBoolean(array[1]));
+						    }
+						    else if(array[0].equals("Passwortlaenge")) {
+						    	tf1.setText(array[1]);
+						    }
+						    else {
+
+						    }
+						}
+					} catch (IOException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}	
+			}
+		});
+		
+		
+		saveSettings = new JMenuItem(new AbstractAction("Save Settings") {
+			public void actionPerformed(ActionEvent g) {
+				String line1 = checkbox_kb.getText() + ": "+ String.valueOf(checkbox_kb.isSelected());
+				String line2 = checkbox_gb.getText() + ": " + String.valueOf(checkbox_gb.isSelected());
+				String line3 = checkbox_z.getText() + ": " + String.valueOf(checkbox_z.isSelected());
+				String line4 = checkbox_s.getText() + ": " + String.valueOf(checkbox_s.isSelected());
+				String line5 = "Passwortlaenge: " + tf1.getText();
+				
+				JFileChooser chooser = new JFileChooser();
+				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				int returnVal = chooser.showOpenDialog(null);
+				if(returnVal == JFileChooser.APPROVE_OPTION) {
+					
+					String path = chooser.getSelectedFile().getAbsolutePath();
+					
+					BufferedWriter writer;
+					try {
+						writer = new BufferedWriter(new FileWriter(path + "\\settings.txt"));
+						writer.write(line1);
+	                    writer.newLine();
+	                    writer.write(line2);
+	                    writer.newLine();
+	                    writer.write(line3);
+	                    writer.newLine();
+	                    writer.write(line4);
+	                    writer.newLine();
+	                    writer.write(line5);
+	                    
+	                    writer.close();
+	                    
+	                    platzhalter1.setText("Settings saved!");
+	                    platzhalter1.setForeground(Color.green);
+	                    
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+					
+				}
+			}
+		});
+		
+		
+		menuData.add(selectFile);
+		menuData.add(saveSettings);
 		
 		menuItemExit = new JMenuItem(new AbstractAction("Exit") {
 			public void actionPerformed(ActionEvent e) {
@@ -94,16 +208,13 @@ public class Generator {
 		
 		b4 = new JButton("-");
 		b4.setVerticalAlignment(JLabel.CENTER);
-		b4.setHorizontalAlignment(JLabel.CENTER);
-		
-		platzhalter1 = new JLabel("");
-		
+		b4.setHorizontalAlignment(JLabel.CENTER);		
 		
 	}
 
 	public void frameFestlegen() {
 
-		f.setTitle("Passwortgenerator 1.0");
+		f.setTitle("Passwortgenerator 2.0");
 
 		f.setSize(500, 500);
 
